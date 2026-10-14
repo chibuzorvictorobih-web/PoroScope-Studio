@@ -1,0 +1,45 @@
+POROSCOPE STUDIO - UPDATED COMPLETE PROJECT
+========================================
+
+This ZIP contains the FULL project. The poroscope folder is part of the
+project itself and must stay beside app.py and requirements.txt.
+
+STEP 1 - EXTRACT
+Right-click this ZIP in Windows and select Extract All. Open the extracted
+folder and locate 'poroscope' (without a dot in front). The folder must
+contain these SEVEN Python files:
+
+  __init__.py
+  circularity.py
+  engine.py
+  io.py
+  reporting.py
+  synthetic.py
+  validation.py
+
+STEP 2 - COMPLETE YOUR EXISTING GITHUB UPLOAD
+Your GitHub repository already contains the other project files.
+Go to https://github.com/chibuzorvictorobih-web/PoroScope-Studio
+Click Add file > Upload files. In Windows File Explorer, DRAG the
+'poroscope' folder (not the ZIP) into the GitHub browser upload area.
+Check that GitHub lists all seven files as poroscope/NAME.py.
+Click Commit changes. Do not upload the whole ZIP as a single file.
+
+If dragging the folder is difficult, use GitHub's built-in web editor
+or a GitHub Desktop client to commit the folder; GitHub's 'choose your
+files' picker cannot reliably select complete folders.
+
+STEP 3 - CHECK AUTOMATED TESTS
+Open your repository's Actions tab and find 'Engineering QA'.
+The workflow should run on every new commit. Wait until both jobs finish.
+If a job fails, review the error before deploying.
+
+STEP 4 - RUN LOCALLY
+Double-click START_HERE_Windows.bat in the same extracted folder.
+
+TROUBLESHOOTING
+Double-click VERIFY_PROJECT_WINDOWS.bat to confirm that all required
+files, including the source folder, are present.
+
+Scientific caution: synthetic-image validation does not prove accuracy
+for real material specimens or certify component safety.
