@@ -50,6 +50,10 @@ python scripts/reproduce_validation.py
 
 The included suite covers processing, positive/negative samples, synthetic determinism and evidence outputs. The `Engineering QA` GitHub Actions workflow performs `ruff check .`, `pytest` with a minimum core-package coverage threshold of 80%, `compileall` and an independence scan for both Python 3.11 and 3.12. The workflow file exists in `.github/workflows/ci.yml`; users must verify the results after publishing.
 
+## Real optical micrograph extension (exploratory, not labelled validation)
+
+Version 1.1 adds a documented 6061-T6 optical image acquired from Wikimedia Commons, with SHA-1 source verification, a fixed bottom image crop, and comparison across global Otsu, flat-field Otsu and adaptive thresholds. No independent expert reference mask exists for this source; cross-algorithm IoU reports **consistency, not correctness**. See [ALLOY_CASE_STUDY.md](ALLOY_CASE_STUDY.md).
+
 ## Proposed real-world evaluation (not yet completed)
 
 Collect material-specific image data under a defined protocol. Use multiple preparation batches, illumination settings, microscopy operators and specimen locations. Obtain expert annotations with an adjudication process, split evaluation by **specimen**, not merely image crop, and report per-material precision/recall, false-positive rates and agreement across operators. Use an independent physical characterisation method when appropriate. Never interpret a single image as proof of material safety.

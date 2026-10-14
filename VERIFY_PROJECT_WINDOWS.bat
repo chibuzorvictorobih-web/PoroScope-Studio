@@ -7,7 +7,7 @@ if not exist "app.py" (echo MISSING: app.py & set "MISSING=1")
 if not exist "requirements.txt" (echo MISSING: requirements.txt & set "MISSING=1")
 if not exist ".github\workflows\ci.yml" (echo MISSING: .github\workflows\ci.yml & set "MISSING=1")
 if not exist ".streamlit\config.toml" (echo MISSING: .streamlit\config.toml & set "MISSING=1")
-for %%F in (__init__.py circularity.py engine.py io.py reporting.py synthetic.py validation.py) do (
+for %%F in (__init__.py alloy_case.py circularity.py engine.py io.py reporting.py synthetic.py validation.py) do (
     if not exist "poroscope\%%F" (echo MISSING: poroscope\%%F & set "MISSING=1")
 )
 if "%MISSING%"=="0" (

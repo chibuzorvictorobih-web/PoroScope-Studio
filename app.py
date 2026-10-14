@@ -9,6 +9,11 @@ import streamlit as st
 
 from poroscope import __version__
 from poroscope.circularity import ENERGY_CONTEXT, PATHWAYS, SOURCES
+from poroscope.alloy_case import (
+    SOURCE_PAGE, SOURCE_IMAGE_URL, SOURCE_AUTHOR, SOURCE_LICENSE,
+    SOURCE_SHA1, SourceVerificationError, retrieve_source_image,
+    verify_source_bytes, analyse_field, case_export,
+)
 from poroscope.engine import InspectionConfig, inspect, threshold_sensitivity
 from poroscope.io import decode_image
 from poroscope.reporting import build_bundle, build_pdf, png_bytes
@@ -302,11 +307,109 @@ def view_sustainability() -> None:
     st.warning("This software is not ASTM-certified, not a validated product LCA, and does not estimate real CO₂ savings from pixel measurements.")
 
 
+def view_alloy_case() -> None:
+    header(
+        "6061-T6 alloy · real microscopy case",
+        "Reproduce an exploratory segmentation challenge on a cited experimental micrograph, then audit algorithm sensitivity.",
+        "06 / REAL IMAGE CASE STUDY",
+    )
+    st.info(
+        "**Scientific boundary:** The original author describes etched grain boundaries and second-phase/inclusion "
+        "contrast. The image has no expert pore labels. Dark-feature segmentation is **not** validated "
+        "porosity detection or an aerospace component acceptance assessment."
+    )
+    st.markdown(
+        f"**Source:** [{SOURCE_AUTHOR} · 6061 aluminium grain boundaries]({SOURCE_PAGE}) · "
+        f"{SOURCE_LICENSE}. Derivative analysis visuals carry this image licence. "
+        "The app does not claim authorship or sponsorship of the source."
+    )
+    st.caption(
+        "Source: 6061-T6 polished and etched plate; uncalibrated image analysis. "
+        "The bottom 13% is cropped out to exclude the photographed scale bar and caption. "
+        "No micrometre values are reported until a calibration is independently verified."
+    )
+    st.image(SOURCE_IMAGE_URL, caption="Original licensed photograph hosted by Wikimedia Commons · Bob Clemintime · CC BY-SA 4.0")
+    st.markdown(f"[Open original image and license information]({SOURCE_PAGE})")
+    st.write(
+        "**Reproducibility:** Only the byte-identical original file is accepted (published SHA-1: "
+        f"`{SOURCE_SHA1}`). Use the Fetch button, or download the original file from Commons "
+        "and upload it here. Resized previews intentionally fail the checksum check."
+    )
+    if "verified_alloy_bytes" not in st.session_state:
+        st.session_state.verified_alloy_bytes = None
+    upload = st.file_uploader("Or supply original Wikimedia PNG", type=["png"], key="alloy_verified_upload")
+    if upload is not None:
+        try:
+            verify_source_bytes(upload.getvalue())
+            st.session_state.verified_alloy_bytes = upload.getvalue()
+            st.success("Uploaded file matches the published source checksum.")
+        except (ValueError, SourceVerificationError) as error:
+            st.error(str(error))
+            st.session_state.verified_alloy_bytes = None
+    if st.button("Fetch and verify original real image", type="primary", use_container_width=True):
+        with st.spinner("Fetching and checking image provenance..."):
+            try:
+                st.session_state.verified_alloy_bytes = retrieve_source_image()
+            except SourceVerificationError as error:
+                st.warning(f"{error}. The original can be uploaded above instead.")
+    image_data = st.session_state.verified_alloy_bytes
+    if image_data is None:
+        st.info("Fetch or upload the verified original PNG to run the three-method comparison.")
+        return
+    min_area = st.slider("Minimum dark-region area (pixels²)", min_value=8, max_value=150, value=24, step=4)
+    with st.spinner("Analysing real 6061-T6 optical micrograph..."):
+        image = verify_source_bytes(image_data)
+        rows, details = analyse_field(image, min_area)
+    st.subheader("Real image · method-dependent segmentation")
+    original, segmented = st.columns(2)
+    with original:
+        st.image(details["field"], caption="Top 87% of source; cropped scale-bar annotation", use_container_width=True)
+    with segmented:
+        st.image(details["baseline"].overlay, caption="Flat-field Otsu · highlighted dark-feature candidates", use_container_width=True)
+    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+    st.subheader("Agreement is not accuracy")
+    agreements = details["method_agreement_iou"]
+    c1, c2 = st.columns(2)
+    c1.metric("Otsu vs corrected Otsu · mask IoU", f'{agreements["Otsu"]:.3f}')
+    c2.metric("Adaptive vs corrected Otsu · mask IoU", f'{agreements["Adaptive"]:.3f}')
+    st.caption(
+        "These scores compare algorithms with each other—not with independent defect labels. "
+        "High agreement does not prove that a pixel is a pore."
+    )
+    st.write("**Threshold perturbation** (three analyses of the same image, ±8 intensity units)")
+    sensitivity = details["sensitivity"]
+    st.dataframe(pd.DataFrame({
+        "Shift from nominal": sensitivity["shifts_from_nominal"],
+        "2-D dark-feature area (%)": sensitivity["area_fraction_pct"],
+    }), hide_index=True, use_container_width=True)
+    st.caption(
+        f'Area range: {sensitivity["range_percentage_points"]:.3f} percentage points. '
+        "This is parameter sensitivity, not a confidence interval or measurement uncertainty."
+    )
+    with st.expander("What a proper real-material validation must add"):
+        st.write(
+            "Obtain permissioned representative specimens; image multiple fields per specimen; "
+            "collect independently reviewed feature labels; establish calibration and preparation protocol; "
+            "split evaluation by specimen; measure false positives, inter-operator variability, "
+            "and agreement with independent physical testing. These steps are not yet completed."
+        )
+    st.download_button(
+        "Download attributed real-image evidence ZIP",
+        data=case_export(image_data, rows, details),
+        file_name="poroscope_6061T6_real_image_case.zip",
+        mime="application/zip", use_container_width=True,
+    )
+    st.caption(
+        "Export includes source credit, CC BY-SA licensing, original-image SHA-256, crop fraction, "
+        "per-method measurements, mask agreement, inspection PDF, overlay and settings."
+    )
+
+
 with st.sidebar:
     st.markdown("### 🔬 PoroScope Studio")
     st.caption(f"Independent engineering software · v{__version__}")
     page = st.radio(
-        "Workspace", ("Overview", "Inspect", "Batch lab", "Validation", "Materials & circularity"),
+        "Workspace", ("Overview", "Inspect", "Batch lab", "Validation", "6061-T6 case study", "Materials & circularity"),
         label_visibility="collapsed",
     )
 config = settings() if page in ("Inspect", "Batch lab") else InspectionConfig()
@@ -318,8 +421,10 @@ elif page == "Batch lab":
     view_batch(config)
 elif page == "Validation":
     view_validation()
+elif page == "6061-T6 case study":
+    view_alloy_case()
 else:
     view_sustainability()
 
 st.divider()
-st.caption("PoroScope Studio v1.0.0 · Made for transparent analysis and reproducible learning · No image is intentionally retained by this application after processing.")
+st.caption("PoroScope Studio v1.1.0 · Made for transparent analysis and reproducible learning · No image is intentionally retained by this application after processing.")

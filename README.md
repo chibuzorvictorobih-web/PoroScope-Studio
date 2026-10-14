@@ -12,6 +12,10 @@ PoroScope Studio is an engineering application, **not a formula calculator**. It
 
 > **Scientific boundary:** a segmented dark or bright patch is not confirmed physical porosity. Area fraction measured on one micrograph is **not** an established 3-D porosity fraction; this project does not certify material safety or implement an acceptance standard. It is a reproducible preliminary research and image-screening tool.
 
+## New in v1.1 — real aluminium-alloy microscope case
+
+The **6061-T6 case study** adds a sourced, real experimental optical micrograph (Bob Clemintime, CC BY-SA 4.0), file checksum verification, image-area cropping to remove scale-bar annotations, three-algorithm comparison, threshold sensitivity, and attributed evidence ZIP export. The dataset has **no independently reviewed pixel ground truth**, so algorithm agreement **must not** be presented as real material defect detection accuracy. See [full case-study methods and image rights](docs/ALLOY_CASE_STUDY.md). The original image is fetched from its documented Wikimedia Commons source when requested; users can upload the original PNG if remote fetching is unavailable.
+
 ## What the project does
 
 | Workspace | Demonstrated capability |
@@ -20,6 +24,7 @@ PoroScope Studio is an engineering application, **not a formula calculator**. It
 | **Inspect** | Upload micrographs or generate a repeatable sample, choose one of four algorithms, modify detection parameters and view image overlays, connected regions and size distributions |
 | **Batch lab** | Compare up to eight uploads with the *same* settings; mark cases for manual review against a user-defined image area marker |
 | **Validation** | Independently recompute 12 synthetic-mask benchmarks with precision, recall, Dice, IoU and a deliberately difficult scratch scenario |
+| **6061-T6 case study** | Check source provenance and run a real alloy micrograph across three segmentation methods, explicitly *without* claiming expert ground truth |
 | **Materials & circularity** | Compare quality-inspection cautions for material families and understand sourced aluminium production/recycling energy context without claiming component-level carbon savings |
 | **Report export** | PDF report plus a complete ZIP with normalized source PNG, overlay, binary mask, candidate CSV and reproducibility JSON with SHA-256 image checksum |
 
@@ -113,12 +118,14 @@ It is transparent, low-cost and easily reproducible without requiring a trained 
 PoroScope-Studio/
 ├── app.py
 ├── poroscope/
+│   ├── alloy_case.py       # Verified real-image case, comparisons, attributed exports
 │   ├── engine.py           # Segmentation, image measurements, sensitivity
 │   ├── synthetic.py        # Reproducible test images and pixel-exact masks
 │   ├── validation.py       # Pixel benchmarking
 │   ├── reporting.py        # PDF, CSV, JSON, PNG and evidence ZIP
 │   ├── io.py               # Safe image decoding and limits
 │   └── circularity.py      # Material pathways and sourced context
+├── docs/ALLOY_CASE_STUDY.md # Real image provenance and interpretation
 ├── assets/demos/           # Four demo images, truth masks, annotated preview
 ├── tests/                  # Core, benchmark and reporting regression tests
 ├── scripts/                # Reproduction and independence checks
@@ -131,6 +138,10 @@ PoroScope-Studio/
 ├── START_HERE_Windows.bat
 └── LICENSE                 # BSD 3-Clause, no institutional affiliation
 ```
+
+## Scientific evidence status
+
+The image-sourced 6061-T6 case establishes that the algorithms can be challenged with **real unlabelled microscopy**, not that they can identify pores correctly. It is an exploratory method-robustness case. For claim-level external validation, collect representative real specimens and independent expert-labelled image masks. **No real-image detection accuracy is claimed.**
 
 ## Limitations and future scientific work
 

@@ -46,7 +46,10 @@ def _page_footer(canvas, doc) -> None:
     canvas.restoreState()
 
 
-def build_pdf(result: InspectionResult, sample_name: str, sensitivity: dict | None = None) -> bytes:
+def build_pdf(
+    result: InspectionResult, sample_name: str, sensitivity: dict | None = None,
+    image_credit: str | None = None,
+) -> bytes:
     output = BytesIO()
     report = SimpleDocTemplate(output, pagesize=A4, topMargin=32, bottomMargin=44, leftMargin=40, rightMargin=40)
     styles = getSampleStyleSheet()
@@ -58,6 +61,8 @@ def build_pdf(result: InspectionResult, sample_name: str, sensitivity: dict | No
         Spacer(1, 13),
         Paragraph("2-D image screening summary", styles["Heading2"]),
     ]
+    if image_credit:
+        story.append(Paragraph(f"Image provenance and licence: {escape(image_credit)}", styles["BodyText"]))
     m = result.metrics
     rows = [
         ["Metric", "Observed value"],
@@ -119,10 +124,13 @@ def build_bundle(
     sample_name: str,
     original: Image.Image,
     sensitivity: dict | None = None,
+    image_credit: str | None = None,
 ) -> bytes:
     image_data = png_bytes(original)
     manifest = result.metadata()
     manifest["sample_name"] = sample_name
+    if image_credit:
+        manifest["image_credit_and_licence"] = image_credit
     manifest["input_png_sha256"] = sha256(image_data).hexdigest()
     manifest["generated_at_utc"] = datetime.now(timezone.utc).isoformat()
     if sensitivity is not None:
@@ -133,7 +141,7 @@ def build_bundle(
         "candidate_mask.png": png_bytes(np.uint8(result.mask) * 255),
         "regions.csv": measurements_csv(result.pores).encode("utf-8"),
         "metadata.json": json.dumps(manifest, indent=2, allow_nan=False).encode("utf-8"),
-        "inspection_report.pdf": build_pdf(result, sample_name, sensitivity),
+        "inspection_report.pdf": build_pdf(result, sample_name, sensitivity, image_credit=image_credit),
         "READ_ME_FIRST.txt": (
             "PoroScope Studio independent material image inspection record.\n"
             "This contains image-derived candidates, not confirmed porosity or a certified test.\n"
