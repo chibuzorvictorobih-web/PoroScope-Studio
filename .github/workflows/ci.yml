@@ -1,0 +1,30 @@
+name: Engineering QA
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install app and QA dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt -r requirements-dev.txt
+      - name: Check source compiles
+        run: python -m compileall -q app.py poroscope tests
+      - name: Static lint
+        run: ruff check .
+      - name: Unit, synthetic benchmark and export tests
+        run: python -m pytest -q --cov=poroscope --cov-report=term-missing --cov-fail-under=80
+      - name: Check that project is independent of programme branding
+        run: python scripts/check_independence.py
