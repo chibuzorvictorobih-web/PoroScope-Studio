@@ -153,9 +153,16 @@ def case_export(original_bytes: bytes, rows: list[dict], details: dict) -> bytes
     verify_source_bytes(original_bytes)
     field = details["field"]
     metadata = case_provenance(original_bytes, field, rows, details)
+    # Use the stable, four-argument reporting API so an app hot-reload cannot
+    # combine a new case-study module with an older reporting module.
+    # Attribution is also included in the PDF's sample title; the export ZIP
+    # carries full original-file provenance and the CC BY-SA licence notice.
+    report_sample = (
+        f"6061-T6 real alloy image (unlabelled) | Source: {SOURCE_AUTHOR}; "
+        f"CC BY-SA 4.0; {SOURCE_PAGE}"
+    )
     standard_bundle = build_bundle(
-        details["baseline"], "6061-T6 real alloy image (unlabelled)", field, details["sensitivity"],
-        image_credit=f"{SOURCE_AUTHOR}; {SOURCE_LICENSE}; {SOURCE_PAGE}",
+        details["baseline"], report_sample, field, details["sensitivity"],
     )
     output = BytesIO()
     with ZipFile(output, "w", ZIP_DEFLATED) as destination:
