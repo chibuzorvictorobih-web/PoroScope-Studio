@@ -94,3 +94,26 @@ def test_case_export_contains_license_and_trace(monkeypatch):
         assert manifest["original_dimensions_px"] == [128, 112]
         assert b"CC BY-SA 4.0" in archive.read("IMAGE_CREDIT_AND_LICENSE.txt")
         assert archive.read("inspection_report.pdf").startswith(b"%PDF")
+
+
+def test_export_works_with_legacy_four_argument_reporting_api(monkeypatch):
+    """Regression: Streamlit can temporarily retain an earlier module after redeploy."""
+    from poroscope.reporting import build_bundle as current_build_bundle
+
+    original = matched_original(monkeypatch)
+    rows, details = alloy_case.analyse_field(alloy_case.verify_source_bytes(original))
+    captured = {}
+
+    def reporting_api_v1(result, sample_name, field, sensitivity):
+        captured["sample_name"] = sample_name
+        return current_build_bundle(result, sample_name, field, sensitivity)
+
+    monkeypatch.setattr(alloy_case, "build_bundle", reporting_api_v1)
+    bundle = alloy_case.case_export(original, rows, details)
+    assert "Bob Clemintime" in captured["sample_name"]
+    assert "CC BY-SA 4.0" in captured["sample_name"]
+    with ZipFile(BytesIO(bundle)) as archive:
+        assert archive.read("inspection_report.pdf").startswith(b"%PDF")
+        metadata = json.loads(archive.read("metadata.json"))
+        assert "Bob Clemintime" in metadata["sample_name"]
+        assert archive.read("IMAGE_CREDIT_AND_LICENSE.txt").count(b"Bob Clemintime") == 1
